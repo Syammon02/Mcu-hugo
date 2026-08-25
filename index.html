@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le MCU dans l'ordre, de Iron Man à Brand New Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE6D2;
+    --paper-2:#E4D8BE;
+    --ink:#14110F;
+    --p1:#C62A21;
+    --p2:#C98A05;
+    --p3:#5B2A86;
+    --p4:#12707F;
+    --p5:#2B3A8F;
+    --p6:#D1481B;
+    --display:"Anton","Haettenschweiler","Arial Narrow Bold",Impact,sans-serif;
+    --cond:"Barlow Condensed","Arial Narrow",sans-serif;
+    --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:radial-gradient(circle, rgba(20,17,15,.07) 1px, transparent 1.1px);
+    background-size:6px 6px;
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.45;
+  }
+
+  /* ---------- en-tête collant ---------- */
+  .bar{
+    position:sticky; top:0; z-index:30;
+    background:var(--ink); color:var(--paper);
+    border-bottom:4px solid var(--ink);
+  }
+  .bar-in{
+    max-width:1180px; margin:0 auto; padding:12px 18px 14px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px;
+  }
+  .logo{
+    font-family:var(--display); font-size:clamp(20px,3.4vw,30px);
+    letter-spacing:.01em; line-height:1; text-transform:uppercase;
+  }
+  .logo span{color:#E8503F}
+  .counter{
+    font-family:var(--cond); font-weight:700; font-size:20px;
+    letter-spacing:.06em; margin-left:auto; white-space:nowrap;
+  }
+  .counter b{font-size:26px}
+  .reset{
+    font-family:var(--cond); font-weight:600; font-size:14px; letter-spacing:.1em;
+    text-transform:uppercase; background:none; color:var(--paper);
+    border:2px solid rgba(239,230,210,.45); border-radius:0;
+    padding:5px 12px; cursor:pointer;
+  }
+  .reset:hover{background:var(--paper); color:var(--ink)}
+  .strip{
+    display:flex; gap:2px; width:100%; margin-top:2px;
+  }
+  .tick{
+    flex:1 1 0; height:9px;
+    border:1.5px solid rgba(239,230,210,.55); background:transparent;
+    transition:background .18s ease;
+  }
+  .tick.on{background:var(--paper); border-color:var(--paper)}
+
+  /* ---------- intro ---------- */
+  .intro{max-width:1180px; margin:0 auto; padding:34px 18px 6px}
+  .kicker{
+    font-family:var(--cond); font-weight:700; text-transform:uppercase;
+    letter-spacing:.22em; font-size:13px; color:#7A6B55;
+  }
+  .intro h1{
+    font-family:var(--display); text-transform:uppercase;
+    font-size:clamp(38px,8vw,84px); line-height:.86; letter-spacing:-.01em;
+    margin:8px 0 14px; max-width:14ch;
+  }
+  .intro p{max-width:60ch; margin:0 0 8px; font-size:17px}
+  .rule{height:5px; background:var(--ink); margin:26px 0 0}
+
+  /* ---------- phases ---------- */
+  .phase{max-width:1180px; margin:0 auto; padding:40px 18px 6px}
+  .phase-head{
+    display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap;
+    border-bottom:3px solid var(--ink); padding-bottom:8px; margin-bottom:22px;
+  }
+  .phase-no{
+    font-family:var(--display); font-size:clamp(30px,5vw,46px); line-height:.8;
+    color:var(--paper); background:var(--ink); padding:8px 12px 6px;
+  }
+  .phase-t{font-family:var(--display); font-size:clamp(22px,3.6vw,34px); line-height:.9; text-transform:uppercase}
+  .phase-sub{font-family:var(--cond); font-weight:600; letter-spacing:.14em; text-transform:uppercase; font-size:13px; color:#7A6B55}
+  .phase-count{margin-left:auto; font-family:var(--cond); font-weight:700; font-size:19px; letter-spacing:.05em}
+
+  .grid{
+    display:grid; gap:18px;
+    grid-template-columns:repeat(auto-fill,minmax(176px,1fr));
+  }
+
+  /* ---------- fiche film ---------- */
+  .film{display:block; cursor:pointer; position:relative}
+  .film input{position:absolute; opacity:0; width:1px; height:1px}
+  .tile{
+    position:relative; aspect-ratio:2/3; overflow:hidden;
+    border:3px solid var(--ink);
+    box-shadow:5px 5px 0 var(--ink);
+    display:flex; align-items:flex-end; padding:12px;
+    transition:transform .14s ease, box-shadow .14s ease;
+  }
+  .tile::before{
+    content:""; position:absolute; inset:0;
+    background-image:radial-gradient(circle, rgba(20,17,15,.26) 1.3px, transparent 1.4px);
+    background-size:7px 7px; pointer-events:none;
+  }
+  .film:hover .tile{transform:translate(-2px,-2px); box-shadow:8px 8px 0 var(--ink)}
+  .film input:focus-visible + .tile{outline:4px solid #1D6FE8; outline-offset:3px}
+  .no{
+    position:absolute; top:0; left:0;
+    background:var(--ink); color:var(--paper);
+    font-family:var(--cond); font-weight:700; font-size:14px; letter-spacing:.08em;
+    padding:3px 9px 2px;
+  }
+  .pivot{
+    position:absolute; top:0; right:0;
+    background:var(--paper); color:var(--ink);
+    font-family:var(--cond); font-weight:700; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; padding:3px 7px 2px; border-left:3px solid var(--ink); border-bottom:3px solid var(--ink);
+  }
+  .tname{
+    position:relative; font-family:var(--display); text-transform:uppercase;
+    color:var(--paper); font-size:clamp(19px,2.1vw,26px); line-height:.88;
+    letter-spacing:-.005em; text-wrap:balance;
+    text-shadow:2px 2px 0 rgba(20,17,15,.35);
+  }
+  .veil{
+    position:absolute; inset:0; background:rgba(239,230,210,.76);
+    opacity:0; transition:opacity .2s ease; pointer-events:none;
+  }
+  .stamp{
+    position:absolute; top:44%; left:50%;
+    transform:translate(-50%,-50%) rotate(-13deg) scale(1.7);
+    font-family:var(--display); font-size:clamp(26px,3.4vw,38px); line-height:1;
+    letter-spacing:.04em; color:var(--ink);
+    border:5px solid var(--ink); padding:4px 14px 2px;
+    opacity:0; transition:opacity .16s ease, transform .16s cubic-bezier(.2,1.5,.4,1);
+    pointer-events:none;
+  }
+  .film input:checked + .tile .veil{opacity:1}
+  .film input:checked + .tile .stamp{opacity:1; transform:translate(-50%,-50%) rotate(-13deg) scale(1)}
+  .film input:checked + .tile{box-shadow:3px 3px 0 var(--ink)}
+
+  .meta{padding:10px 2px 0}
+  .mtop{display:flex; align-items:baseline; gap:8px}
+  .name{font-family:var(--cond); font-weight:700; font-size:17px; line-height:1.1; letter-spacing:.005em}
+  .year{font-family:var(--cond); font-weight:600; font-size:15px; color:#7A6B55}
+  .hook{margin:5px 0 0; font-size:13.5px; line-height:1.35; color:#4A4239}
+  .film input:checked ~ .meta .name,
+  .film input:checked ~ .meta .hook{opacity:.5}
+
+  /* ---------- pied ---------- */
+  footer{
+    max-width:1180px; margin:56px auto 0; padding:24px 18px 60px;
+    border-top:5px solid var(--ink);
+  }
+  footer p{max-width:62ch; font-size:14.5px; color:#4A4239; margin:0 0 8px}
+  .save-note{font-family:var(--cond); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:12px; color:#7A6B55}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(2,1fr); gap:14px}
+    .tile{box-shadow:4px 4px 0 var(--ink)}
+    .counter{margin-left:0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="logo">Le MCU dans l'<span>ordre</span></div>
+    <div class="counter"><b id="done">0</b> / 38 films vus</div>
+    <button class="reset" id="reset" type="button">Repartir de zéro</button>
+    <div class="strip" id="strip" aria-hidden="true"></div>
+  </div>
+</header>
+
+<section class="intro">
+  <div class="kicker">Ordre de sortie, films uniquement</div>
+  <h1>38 films, une seule bonne route</h1>
+  <p>C'est l'ordre dans lequel les films sont sortis au cinéma, et c'est celui à suivre pour une première découverte : les clins d'œil, les scènes post-génériques et les révélations arrivent au bon moment, sans rien griller à l'avance.</p>
+  <p>Coche un film quand tu l'as vu. Ta progression reste enregistrée, tu peux fermer la page et revenir plus tard.</p>
+  <div class="rule"></div>
+</section>
+
+<main id="app"></main>
+
+<footer>
+  <p>Les séries Disney+ ne sont pas dans la liste : aucune n'est indispensable pour comprendre les films. Deux exceptions si tu accroches : <em>WandaVision</em> avant <em>Doctor Strange in the Multiverse of Madness</em>, et <em>Ms. Marvel</em> avant <em>The Marvels</em>.</p>
+  <p>Reste toujours jusqu'au bout du générique. Sans exception.</p>
+  <p class="save-note" id="savenote">Progression enregistrée sur cet appareil</p>
+</footer>
+
+<script>
+const PHASES = [
+  {no:"01", title:"Phase 1", sub:"Saga de l'Infini, 2008-2012", color:"var(--p1)"},
+  {no:"02", title:"Phase 2", sub:"Saga de l'Infini, 2013-2015", color:"var(--p2)"},
+  {no:"03", title:"Phase 3", sub:"Saga de l'Infini, 2016-2019", color:"var(--p3)"},
+  {no:"04", title:"Phase 4", sub:"Saga du Multivers, 2021-2022", color:"var(--p4)"},
+  {no:"05", title:"Phase 5", sub:"Saga du Multivers, 2023-2025", color:"var(--p5)"},
+  {no:"06", title:"Phase 6", sub:"Saga du Multivers, 2025-2026", color:"var(--p6)"}
+];
+
+const FILMS = [
+  {id:"f01", p:1, t:"Iron Man", y:2008, h:"Un marchand d'armes se fabrique une armure. Tout part de là."},
+  {id:"f02", p:1, t:"L'Incroyable Hulk", y:2008, h:"Bruce Banner en cavale. Le film le plus isolé de la saga."},
+  {id:"f03", p:1, t:"Iron Man 2", y:2010, h:"Tony gère mal sa célébrité, le S.H.I.E.L.D. s'installe."},
+  {id:"f04", p:1, t:"Thor", y:2011, h:"Un dieu banni sur Terre apprend l'humilité."},
+  {id:"f05", p:1, t:"Captain America : First Avenger", y:2011, h:"1943, la naissance du super-soldat."},
+  {id:"f06", p:1, t:"Avengers", y:2012, h:"La première réunion d'équipe. Le film qui a lancé la machine.", pivot:true},
+
+  {id:"f07", p:2, t:"Iron Man 3", y:2013, h:"Tony encaisse la bataille de New York, en mode thriller."},
+  {id:"f08", p:2, t:"Thor : Le Monde des ténèbres", y:2013, h:"Le plus faible du lot, mais il pose une pièce du puzzle."},
+  {id:"f09", p:2, t:"Captain America : Le Soldat de l'hiver", y:2014, h:"Thriller d'espionnage. Un des sommets du MCU.", pivot:true},
+  {id:"f10", p:2, t:"Les Gardiens de la Galaxie", y:2014, h:"Direction l'espace avec une bande de bras cassés."},
+  {id:"f11", p:2, t:"Avengers : L'Ère d'Ultron", y:2015, h:"L'IA créée par Tony tourne très mal."},
+  {id:"f12", p:2, t:"Ant-Man", y:2015, h:"Un film de casse à échelle réduite. Respiration bienvenue."},
+
+  {id:"f13", p:3, t:"Captain America : Civil War", y:2016, h:"Les Avengers se déchirent, et Spider-Man débarque.", pivot:true},
+  {id:"f14", p:3, t:"Doctor Strange", y:2016, h:"La magie entre officiellement dans le jeu."},
+  {id:"f15", p:3, t:"Les Gardiens de la Galaxie Vol. 2", y:2017, h:"Peter Quill retrouve son père. Ça se passe mal."},
+  {id:"f16", p:3, t:"Spider-Man : Homecoming", y:2017, h:"Peter Parker, 15 ans, veut jouer dans la cour des grands."},
+  {id:"f17", p:3, t:"Thor : Ragnarok", y:2017, h:"Thor change de ton : couleurs, humour et guitare."},
+  {id:"f18", p:3, t:"Black Panther", y:2018, h:"Le Wakanda ouvre enfin ses portes."},
+  {id:"f19", p:3, t:"Avengers : Infinity War", y:2018, h:"Thanos passe à l'action. Évite tout spoiler avant.", pivot:true},
+  {id:"f20", p:3, t:"Ant-Man et la Guêpe", y:2018, h:"Léger en apparence, capital pour la suite."},
+  {id:"f21", p:3, t:"Captain Marvel", y:2019, h:"Retour en 1995, avant à peu près tout le reste."},
+  {id:"f22", p:3, t:"Avengers : Endgame", y:2019, h:"La conclusion de onze ans de récit.", pivot:true},
+  {id:"f23", p:3, t:"Spider-Man : Far From Home", y:2019, h:"L'épilogue de la Saga de l'Infini, en tournée européenne."},
+
+  {id:"f24", p:4, t:"Black Widow", y:2021, h:"Le passé de Natasha. L'histoire se situe avant Infinity War."},
+  {id:"f25", p:4, t:"Shang-Chi et la Légende des Dix Anneaux", y:2021, h:"Arts martiaux et mythologie, un héros qui arrive de nulle part."},
+  {id:"f26", p:4, t:"Les Éternels", y:2021, h:"7 000 ans d'histoire, très à part du reste."},
+  {id:"f27", p:4, t:"Spider-Man : No Way Home", y:2021, h:"Le multivers s'ouvre pour de bon. À voir sans rien savoir.", pivot:true},
+  {id:"f28", p:4, t:"Doctor Strange in the Multiverse of Madness", y:2022, h:"Virage horreur. La série WandaVision aide beaucoup ici."},
+  {id:"f29", p:4, t:"Thor : Love and Thunder", y:2022, h:"Thor part en quête, ton volontairement très léger."},
+  {id:"f30", p:4, t:"Black Panther : Wakanda Forever", y:2022, h:"Le Wakanda après la perte de son roi."},
+
+  {id:"f31", p:5, t:"Ant-Man et la Guêpe : Quantumania", y:2023, h:"Plongée dans le monde quantique, entrée en scène de Kang."},
+  {id:"f32", p:5, t:"Les Gardiens de la Galaxie Vol. 3", y:2023, h:"L'adieu à l'équipe, avec l'histoire de Rocket."},
+  {id:"f33", p:5, t:"The Marvels", y:2023, h:"Trois héroïnes échangent leurs places à distance."},
+  {id:"f34", p:5, t:"Deadpool & Wolverine", y:2024, h:"Interdit aux plus jeunes, et bourré de références."},
+  {id:"f35", p:5, t:"Captain America : Brave New World", y:2025, h:"Sam Wilson prend le bouclier, thriller politique."},
+  {id:"f36", p:5, t:"Thunderbolts*", y:2025, h:"Une équipe d'antihéros et de seconds couteaux."},
+
+  {id:"f37", p:6, t:"Les Quatre Fantastiques : Premiers Pas", y:2025, h:"Nouvelle famille de héros, univers rétrofuturiste."},
+  {id:"f38", p:6, t:"Spider-Man : Brand New Day", y:2026, h:"Peter Parker repart de zéro dans un monde qui l'a oublié."}
+];
+
+const KEY = "mcu-films-vus";
+let seen = new Set();
+let saveTimer = null;
+
+function esc(s){return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = PHASES.map((ph, i) => {
+    const n = i + 1;
+    const list = FILMS.filter(f => f.p === n);
+    const cards = list.map(f => {
+      const idx = String(FILMS.indexOf(f) + 1).padStart(2, "0");
+      return `<label class="film">
+        <input type="checkbox" data-id="${f.id}" aria-label="${esc(f.t)} (${f.y}), marquer comme vu">
+        <span class="tile" style="background:${ph.color}">
+          <span class="no">${idx}</span>
+          ${f.pivot ? '<span class="pivot">Pivot</span>' : ""}
+          <span class="tname">${esc(f.t)}</span>
+          <span class="veil"></span>
+          <span class="stamp">Vu</span>
+        </span>
+        <span class="meta">
+          <span class="mtop"><span class="name">${esc(f.t)}</span><span class="year">${f.y}</span></span>
+          <p class="hook">${esc(f.h)}</p>
+        </span>
+      </label>`;
+    }).join("");
+    return `<section class="phase">
+      <div class="phase-head">
+        <div class="phase-no">${ph.no}</div>
+        <div>
+          <div class="phase-t">${ph.title}</div>
+          <div class="phase-sub">${ph.sub}</div>
+        </div>
+        <div class="phase-count" data-phase="${n}">0 / ${list.length}</div>
+      </div>
+      <div class="grid">${cards}</div>
+    </section>`;
+  }).join("");
+
+  const strip = document.getElementById("strip");
+  strip.innerHTML = FILMS.map(f => `<i class="tick" data-tick="${f.id}"></i>`).join("");
+
+  app.addEventListener("change", e => {
+    const box = e.target.closest("input[type=checkbox]");
+    if (!box) return;
+    if (box.checked) seen.add(box.dataset.id); else seen.delete(box.dataset.id);
+    sync();
+    queueSave();
+  });
+}
+
+function sync(){
+  document.querySelectorAll("#app input[type=checkbox]").forEach(b => {
+    b.checked = seen.has(b.dataset.id);
+  });
+  document.querySelectorAll(".tick").forEach(t => {
+    t.classList.toggle("on", seen.has(t.dataset.tick));
+  });
+  document.getElementById("done").textContent = seen.size;
+  PHASES.forEach((ph, i) => {
+    const n = i + 1;
+    const list = FILMS.filter(f => f.p === n);
+    const c = list.filter(f => seen.has(f.id)).length;
+    const el = document.querySelector(`.phase-count[data-phase="${n}"]`);
+    if (el) el.textContent = `${c} / ${list.length}`;
+  });
+}
+
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 350);
+}
+
+function save(){
+  try {
+    localStorage.setItem(KEY, JSON.stringify([...seen]));
+    document.getElementById("savenote").textContent = "Progression enregistrée";
+  } catch (err) {
+    document.getElementById("savenote").textContent = "Progression gardée le temps de la session seulement";
+  }
+}
+
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) seen = new Set(JSON.parse(raw));
+  } catch (err) {
+    seen = new Set();
+  }
+  sync();
+}
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (!seen.size) return;
+  if (!confirm("Décocher les " + seen.size + " films déjà vus ?")) return;
+  seen.clear();
+  sync();
+  queueSave();
+});
+
+render();
+load();
+</script>
+</body>
+</html>
