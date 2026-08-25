@@ -122,6 +122,12 @@
   }
   .film:hover .tile{transform:translate(-2px,-2px); box-shadow:8px 8px 0 var(--ink)}
   .film input:focus-visible + .tile{outline:4px solid #1D6FE8; outline-offset:3px}
+  .poster{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; opacity:0; transition:opacity .3s ease;
+  }
+  .tile.has-poster .poster{opacity:1}
+  .tile.has-poster .tname{opacity:0}
   .no{
     position:absolute; top:0; left:0;
     background:var(--ink); color:var(--paper);
@@ -139,6 +145,7 @@
     color:var(--paper); font-size:clamp(19px,2.1vw,26px); line-height:.88;
     letter-spacing:-.005em; text-wrap:balance;
     text-shadow:2px 2px 0 rgba(20,17,15,.35);
+    transition:opacity .3s ease;
   }
   .veil{
     position:absolute; inset:0; background:rgba(239,230,210,.76);
@@ -172,6 +179,7 @@
   }
   footer p{max-width:62ch; font-size:14.5px; color:#4A4239; margin:0 0 8px}
   .save-note{font-family:var(--cond); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:12px; color:#7A6B55}
+  .credit{font-size:12.5px; color:#7A6B55; margin-top:14px}
 
   @media (max-width:520px){
     .grid{grid-template-columns:repeat(2,1fr); gap:14px}
@@ -208,9 +216,18 @@
   <p>Les séries Disney+ ne sont pas dans la liste : aucune n'est indispensable pour comprendre les films. Deux exceptions si tu accroches : <em>WandaVision</em> avant <em>Doctor Strange in the Multiverse of Madness</em>, et <em>Ms. Marvel</em> avant <em>The Marvels</em>.</p>
   <p>Reste toujours jusqu'au bout du générique. Sans exception.</p>
   <p class="save-note" id="savenote">Progression enregistrée sur cet appareil</p>
+  <p class="credit">Affiches © Marvel Studios, chargées via OMDb ou Wikipédia.</p>
 </footer>
 
 <script>
+const SUPABASE_URL = "https://ecepookbxkqgclxkhkcf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OJ5qUmrc8SGC8-VwmxFvpg_W53dG6_y";
+const TABLE = "mcu_films_vus";
+const WIKI_API = "https://en.wikipedia.org/w/api.php";
+// Clé API OMDb (gratuite sur omdbapi.com). Vide : les affiches viennent de Wikipédia.
+const OMDB_KEY = "";
+const OMDB_API = "https://www.omdbapi.com/";
+
 const PHASES = [
   {no:"01", title:"Phase 1", sub:"Saga de l'Infini, 2008-2012", color:"var(--p1)"},
   {no:"02", title:"Phase 2", sub:"Saga de l'Infini, 2013-2015", color:"var(--p2)"},
@@ -220,58 +237,75 @@ const PHASES = [
   {no:"06", title:"Phase 6", sub:"Saga du Multivers, 2025-2026", color:"var(--p6)"}
 ];
 
+// w : titre de l'article Wikipédia (en) dont l'infobox porte l'affiche officielle
+// imdb : identifiant IMDb pour la requête OMDb (absent = recherche OMDb par titre + année)
 const FILMS = [
-  {id:"f01", p:1, t:"Iron Man", y:2008, h:"Un marchand d'armes se fabrique une armure. Tout part de là."},
-  {id:"f02", p:1, t:"L'Incroyable Hulk", y:2008, h:"Bruce Banner en cavale. Le film le plus isolé de la saga."},
-  {id:"f03", p:1, t:"Iron Man 2", y:2010, h:"Tony gère mal sa célébrité, le S.H.I.E.L.D. s'installe."},
-  {id:"f04", p:1, t:"Thor", y:2011, h:"Un dieu banni sur Terre apprend l'humilité."},
-  {id:"f05", p:1, t:"Captain America : First Avenger", y:2011, h:"1943, la naissance du super-soldat."},
-  {id:"f06", p:1, t:"Avengers", y:2012, h:"La première réunion d'équipe. Le film qui a lancé la machine.", pivot:true},
+  {id:"f01", p:1, t:"Iron Man", y:2008, w:"Iron Man (2008 film)", imdb:"tt0371746", h:"Un marchand d'armes se fabrique une armure. Tout part de là."},
+  {id:"f02", p:1, t:"L'Incroyable Hulk", y:2008, w:"The Incredible Hulk (film)", imdb:"tt0800080", h:"Bruce Banner en cavale. Le film le plus isolé de la saga."},
+  {id:"f03", p:1, t:"Iron Man 2", y:2010, w:"Iron Man 2", imdb:"tt1228705", h:"Tony gère mal sa célébrité, le S.H.I.E.L.D. s'installe."},
+  {id:"f04", p:1, t:"Thor", y:2011, w:"Thor (film)", imdb:"tt0800369", h:"Un dieu banni sur Terre apprend l'humilité."},
+  {id:"f05", p:1, t:"Captain America : First Avenger", y:2011, w:"Captain America: The First Avenger", imdb:"tt0458339", h:"1943, la naissance du super-soldat."},
+  {id:"f06", p:1, t:"Avengers", y:2012, w:"The Avengers (2012 film)", imdb:"tt0848228", h:"La première réunion d'équipe. Le film qui a lancé la machine.", pivot:true},
 
-  {id:"f07", p:2, t:"Iron Man 3", y:2013, h:"Tony encaisse la bataille de New York, en mode thriller."},
-  {id:"f08", p:2, t:"Thor : Le Monde des ténèbres", y:2013, h:"Le plus faible du lot, mais il pose une pièce du puzzle."},
-  {id:"f09", p:2, t:"Captain America : Le Soldat de l'hiver", y:2014, h:"Thriller d'espionnage. Un des sommets du MCU.", pivot:true},
-  {id:"f10", p:2, t:"Les Gardiens de la Galaxie", y:2014, h:"Direction l'espace avec une bande de bras cassés."},
-  {id:"f11", p:2, t:"Avengers : L'Ère d'Ultron", y:2015, h:"L'IA créée par Tony tourne très mal."},
-  {id:"f12", p:2, t:"Ant-Man", y:2015, h:"Un film de casse à échelle réduite. Respiration bienvenue."},
+  {id:"f07", p:2, t:"Iron Man 3", y:2013, w:"Iron Man 3", imdb:"tt1300854", h:"Tony encaisse la bataille de New York, en mode thriller."},
+  {id:"f08", p:2, t:"Thor : Le Monde des ténèbres", y:2013, w:"Thor: The Dark World", imdb:"tt1981115", h:"Le plus faible du lot, mais il pose une pièce du puzzle."},
+  {id:"f09", p:2, t:"Captain America : Le Soldat de l'hiver", y:2014, w:"Captain America: The Winter Soldier", imdb:"tt1843866", h:"Thriller d'espionnage. Un des sommets du MCU.", pivot:true},
+  {id:"f10", p:2, t:"Les Gardiens de la Galaxie", y:2014, w:"Guardians of the Galaxy (film)", imdb:"tt2015381", h:"Direction l'espace avec une bande de bras cassés."},
+  {id:"f11", p:2, t:"Avengers : L'Ère d'Ultron", y:2015, w:"Avengers: Age of Ultron", imdb:"tt2395427", h:"L'IA créée par Tony tourne très mal."},
+  {id:"f12", p:2, t:"Ant-Man", y:2015, w:"Ant-Man (film)", imdb:"tt0478970", h:"Un film de casse à échelle réduite. Respiration bienvenue."},
 
-  {id:"f13", p:3, t:"Captain America : Civil War", y:2016, h:"Les Avengers se déchirent, et Spider-Man débarque.", pivot:true},
-  {id:"f14", p:3, t:"Doctor Strange", y:2016, h:"La magie entre officiellement dans le jeu."},
-  {id:"f15", p:3, t:"Les Gardiens de la Galaxie Vol. 2", y:2017, h:"Peter Quill retrouve son père. Ça se passe mal."},
-  {id:"f16", p:3, t:"Spider-Man : Homecoming", y:2017, h:"Peter Parker, 15 ans, veut jouer dans la cour des grands."},
-  {id:"f17", p:3, t:"Thor : Ragnarok", y:2017, h:"Thor change de ton : couleurs, humour et guitare."},
-  {id:"f18", p:3, t:"Black Panther", y:2018, h:"Le Wakanda ouvre enfin ses portes."},
-  {id:"f19", p:3, t:"Avengers : Infinity War", y:2018, h:"Thanos passe à l'action. Évite tout spoiler avant.", pivot:true},
-  {id:"f20", p:3, t:"Ant-Man et la Guêpe", y:2018, h:"Léger en apparence, capital pour la suite."},
-  {id:"f21", p:3, t:"Captain Marvel", y:2019, h:"Retour en 1995, avant à peu près tout le reste."},
-  {id:"f22", p:3, t:"Avengers : Endgame", y:2019, h:"La conclusion de onze ans de récit.", pivot:true},
-  {id:"f23", p:3, t:"Spider-Man : Far From Home", y:2019, h:"L'épilogue de la Saga de l'Infini, en tournée européenne."},
+  {id:"f13", p:3, t:"Captain America : Civil War", y:2016, w:"Captain America: Civil War", imdb:"tt3498820", h:"Les Avengers se déchirent, et Spider-Man débarque.", pivot:true},
+  {id:"f14", p:3, t:"Doctor Strange", y:2016, w:"Doctor Strange (2016 film)", imdb:"tt1211837", h:"La magie entre officiellement dans le jeu."},
+  {id:"f15", p:3, t:"Les Gardiens de la Galaxie Vol. 2", y:2017, w:"Guardians of the Galaxy Vol. 2", imdb:"tt3896198", h:"Peter Quill retrouve son père. Ça se passe mal."},
+  {id:"f16", p:3, t:"Spider-Man : Homecoming", y:2017, w:"Spider-Man: Homecoming", imdb:"tt2250912", h:"Peter Parker, 15 ans, veut jouer dans la cour des grands."},
+  {id:"f17", p:3, t:"Thor : Ragnarok", y:2017, w:"Thor: Ragnarok", imdb:"tt3501632", h:"Thor change de ton : couleurs, humour et guitare."},
+  {id:"f18", p:3, t:"Black Panther", y:2018, w:"Black Panther (film)", imdb:"tt1825683", h:"Le Wakanda ouvre enfin ses portes."},
+  {id:"f19", p:3, t:"Avengers : Infinity War", y:2018, w:"Avengers: Infinity War", imdb:"tt4154756", h:"Thanos passe à l'action. Évite tout spoiler avant.", pivot:true},
+  {id:"f20", p:3, t:"Ant-Man et la Guêpe", y:2018, w:"Ant-Man and the Wasp", imdb:"tt5095030", h:"Léger en apparence, capital pour la suite."},
+  {id:"f21", p:3, t:"Captain Marvel", y:2019, w:"Captain Marvel (film)", imdb:"tt4154664", h:"Retour en 1995, avant à peu près tout le reste."},
+  {id:"f22", p:3, t:"Avengers : Endgame", y:2019, w:"Avengers: Endgame", imdb:"tt4154796", h:"La conclusion de onze ans de récit.", pivot:true},
+  {id:"f23", p:3, t:"Spider-Man : Far From Home", y:2019, w:"Spider-Man: Far From Home", imdb:"tt6320628", h:"L'épilogue de la Saga de l'Infini, en tournée européenne."},
 
-  {id:"f24", p:4, t:"Black Widow", y:2021, h:"Le passé de Natasha. L'histoire se situe avant Infinity War."},
-  {id:"f25", p:4, t:"Shang-Chi et la Légende des Dix Anneaux", y:2021, h:"Arts martiaux et mythologie, un héros qui arrive de nulle part."},
-  {id:"f26", p:4, t:"Les Éternels", y:2021, h:"7 000 ans d'histoire, très à part du reste."},
-  {id:"f27", p:4, t:"Spider-Man : No Way Home", y:2021, h:"Le multivers s'ouvre pour de bon. À voir sans rien savoir.", pivot:true},
-  {id:"f28", p:4, t:"Doctor Strange in the Multiverse of Madness", y:2022, h:"Virage horreur. La série WandaVision aide beaucoup ici."},
-  {id:"f29", p:4, t:"Thor : Love and Thunder", y:2022, h:"Thor part en quête, ton volontairement très léger."},
-  {id:"f30", p:4, t:"Black Panther : Wakanda Forever", y:2022, h:"Le Wakanda après la perte de son roi."},
+  {id:"f24", p:4, t:"Black Widow", y:2021, w:"Black Widow (2021 film)", imdb:"tt3480822", h:"Le passé de Natasha. L'histoire se situe avant Infinity War."},
+  {id:"f25", p:4, t:"Shang-Chi et la Légende des Dix Anneaux", y:2021, w:"Shang-Chi and the Legend of the Ten Rings", imdb:"tt9376612", h:"Arts martiaux et mythologie, un héros qui arrive de nulle part."},
+  {id:"f26", p:4, t:"Les Éternels", y:2021, w:"Eternals (film)", imdb:"tt9032400", h:"7 000 ans d'histoire, très à part du reste."},
+  {id:"f27", p:4, t:"Spider-Man : No Way Home", y:2021, w:"Spider-Man: No Way Home", imdb:"tt10872600", h:"Le multivers s'ouvre pour de bon. À voir sans rien savoir.", pivot:true},
+  {id:"f28", p:4, t:"Doctor Strange in the Multiverse of Madness", y:2022, w:"Doctor Strange in the Multiverse of Madness", imdb:"tt9419884", h:"Virage horreur. La série WandaVision aide beaucoup ici."},
+  {id:"f29", p:4, t:"Thor : Love and Thunder", y:2022, w:"Thor: Love and Thunder", imdb:"tt10648342", h:"Thor part en quête, ton volontairement très léger."},
+  {id:"f30", p:4, t:"Black Panther : Wakanda Forever", y:2022, w:"Black Panther: Wakanda Forever", imdb:"tt9114286", h:"Le Wakanda après la perte de son roi."},
 
-  {id:"f31", p:5, t:"Ant-Man et la Guêpe : Quantumania", y:2023, h:"Plongée dans le monde quantique, entrée en scène de Kang."},
-  {id:"f32", p:5, t:"Les Gardiens de la Galaxie Vol. 3", y:2023, h:"L'adieu à l'équipe, avec l'histoire de Rocket."},
-  {id:"f33", p:5, t:"The Marvels", y:2023, h:"Trois héroïnes échangent leurs places à distance."},
-  {id:"f34", p:5, t:"Deadpool & Wolverine", y:2024, h:"Interdit aux plus jeunes, et bourré de références."},
-  {id:"f35", p:5, t:"Captain America : Brave New World", y:2025, h:"Sam Wilson prend le bouclier, thriller politique."},
-  {id:"f36", p:5, t:"Thunderbolts*", y:2025, h:"Une équipe d'antihéros et de seconds couteaux."},
+  {id:"f31", p:5, t:"Ant-Man et la Guêpe : Quantumania", y:2023, w:"Ant-Man and the Wasp: Quantumania", imdb:"tt10954600", h:"Plongée dans le monde quantique, entrée en scène de Kang."},
+  {id:"f32", p:5, t:"Les Gardiens de la Galaxie Vol. 3", y:2023, w:"Guardians of the Galaxy Vol. 3", imdb:"tt6791350", h:"L'adieu à l'équipe, avec l'histoire de Rocket."},
+  {id:"f33", p:5, t:"The Marvels", y:2023, w:"The Marvels", imdb:"tt10676048", h:"Trois héroïnes échangent leurs places à distance."},
+  {id:"f34", p:5, t:"Deadpool & Wolverine", y:2024, w:"Deadpool & Wolverine", imdb:"tt6263850", h:"Interdit aux plus jeunes, et bourré de références."},
+  {id:"f35", p:5, t:"Captain America : Brave New World", y:2025, w:"Captain America: Brave New World", imdb:"tt14513804", h:"Sam Wilson prend le bouclier, thriller politique."},
+  {id:"f36", p:5, t:"Thunderbolts*", y:2025, w:"Thunderbolts*", imdb:"tt20969586", h:"Une équipe d'antihéros et de seconds couteaux."},
 
-  {id:"f37", p:6, t:"Les Quatre Fantastiques : Premiers Pas", y:2025, h:"Nouvelle famille de héros, univers rétrofuturiste."},
-  {id:"f38", p:6, t:"Spider-Man : Brand New Day", y:2026, h:"Peter Parker repart de zéro dans un monde qui l'a oublié."}
+  {id:"f37", p:6, t:"Les Quatre Fantastiques : Premiers Pas", y:2025, w:"The Fantastic Four: First Steps", h:"Nouvelle famille de héros, univers rétrofuturiste."},
+  {id:"f38", p:6, t:"Spider-Man : Brand New Day", y:2026, w:"Spider-Man: Brand New Day", h:"Peter Parker repart de zéro dans un monde qui l'a oublié."}
 ];
 
 const KEY = "mcu-films-vus";
+const KEY_DEVICE = "mcu-device-id";
+const KEY_POSTERS = "mcu-affiches-v2";
 let seen = new Set();
 let saveTimer = null;
 
 function esc(s){return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
+/* ---------- identifiant d'appareil (anonyme) ---------- */
+function newId(){
+  return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2));
+}
+let deviceId;
+try {
+  deviceId = localStorage.getItem(KEY_DEVICE);
+  if (!deviceId){ deviceId = newId(); localStorage.setItem(KEY_DEVICE, deviceId); }
+} catch (err) {
+  deviceId = newId();
+}
+
+/* ---------- rendu ---------- */
 function render(){
   const app = document.getElementById("app");
   app.innerHTML = PHASES.map((ph, i) => {
@@ -313,9 +347,11 @@ function render(){
   app.addEventListener("change", e => {
     const box = e.target.closest("input[type=checkbox]");
     if (!box) return;
-    if (box.checked) seen.add(box.dataset.id); else seen.delete(box.dataset.id);
+    const id = box.dataset.id;
+    if (box.checked) seen.add(id); else seen.delete(id);
     sync();
-    queueSave();
+    saveLocal();
+    queuePush(id, box.checked);
   });
 }
 
@@ -336,40 +372,178 @@ function sync(){
   });
 }
 
-function queueSave(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, 350);
+/* ---------- persistance : localStorage (cache) + Supabase (source) ---------- */
+function note(msg){ document.getElementById("savenote").textContent = msg; }
+
+function saveLocal(){
+  try { localStorage.setItem(KEY, JSON.stringify([...seen])); } catch (err) {}
 }
 
-function save(){
+function sb(path, opts){
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, Object.assign({
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json"
+    }
+  }, opts));
+}
+
+const pending = new Map();
+function queuePush(filmId, checked){
+  pending.set(filmId, checked);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushPending, 350);
+}
+
+async function flushPending(){
+  const batch = new Map(pending);
+  pending.clear();
+  const toAdd = [...batch].filter(([, c]) => c).map(([id]) => ({device_id: deviceId, film_id: id}));
+  const toDel = [...batch].filter(([, c]) => !c).map(([id]) => id);
   try {
-    localStorage.setItem(KEY, JSON.stringify([...seen]));
-    document.getElementById("savenote").textContent = "Progression enregistrée";
+    if (toAdd.length){
+      const r = await sb(`${TABLE}?on_conflict=device_id,film_id`, {
+        method: "POST",
+        headers: {"apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"},
+        body: JSON.stringify(toAdd)
+      });
+      if (!r.ok) throw new Error("insert " + r.status);
+    }
+    if (toDel.length){
+      const list = toDel.map(encodeURIComponent).join(",");
+      const r = await sb(`${TABLE}?device_id=eq.${encodeURIComponent(deviceId)}&film_id=in.(${list})`, {method: "DELETE"});
+      if (!r.ok) throw new Error("delete " + r.status);
+    }
+    note("Progression synchronisée");
   } catch (err) {
-    document.getElementById("savenote").textContent = "Progression gardée le temps de la session seulement";
+    note("Hors ligne : progression gardée sur cet appareil");
   }
 }
 
-function load(){
+async function load(){
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) seen = new Set(JSON.parse(raw));
-  } catch (err) {
-    seen = new Set();
-  }
+  } catch (err) {}
   sync();
+
+  try {
+    const r = await sb(`${TABLE}?device_id=eq.${encodeURIComponent(deviceId)}&select=film_id`);
+    if (!r.ok) throw new Error("select " + r.status);
+    const rows = await r.json();
+    const remote = new Set(rows.map(x => x.film_id));
+    const localOnly = [...seen].filter(id => !remote.has(id));
+    remote.forEach(id => seen.add(id));
+    sync();
+    saveLocal();
+    if (localOnly.length){
+      localOnly.forEach(id => pending.set(id, true));
+      await flushPending();
+    } else {
+      note("Progression synchronisée");
+    }
+  } catch (err) {
+    note("Hors ligne : progression gardée sur cet appareil");
+  }
 }
 
-document.getElementById("reset").addEventListener("click", () => {
+document.getElementById("reset").addEventListener("click", async () => {
   if (!seen.size) return;
   if (!confirm("Décocher les " + seen.size + " films déjà vus ?")) return;
   seen.clear();
+  pending.clear();
   sync();
-  queueSave();
+  saveLocal();
+  try {
+    const r = await sb(`${TABLE}?device_id=eq.${encodeURIComponent(deviceId)}`, {method: "DELETE"});
+    if (!r.ok) throw new Error("reset " + r.status);
+    note("Progression synchronisée");
+  } catch (err) {
+    note("Hors ligne : progression gardée sur cet appareil");
+  }
 });
+
+/* ---------- affiches officielles (infobox Wikipédia, une requête pour les 38) ---------- */
+function applyPosters(map){
+  FILMS.forEach(f => {
+    const src = map[f.id];
+    if (!src) return;
+    const box = document.querySelector(`#app input[data-id="${f.id}"]`);
+    const tile = box && box.nextElementSibling;
+    if (!tile || tile.querySelector(".poster")) return;
+    const img = new Image();
+    img.className = "poster";
+    img.alt = "Affiche de " + f.t;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.referrerPolicy = "no-referrer";
+    img.onload = () => tile.classList.add("has-poster");
+    img.src = src;
+    tile.prepend(img);
+  });
+}
+
+// Titre anglais pour la recherche OMDb (titre Wikipédia sans la parenthèse de désambiguïsation)
+function enTitle(f){ return f.w.replace(/\s*\([^)]*\)\s*$/, ""); }
+
+async function fetchOmdbPosters(films){
+  const map = {};
+  await Promise.all(films.map(async f => {
+    try {
+      const q = f.imdb ? "i=" + f.imdb : "t=" + encodeURIComponent(enTitle(f)) + "&y=" + f.y;
+      const res = await fetch(OMDB_API + "?apikey=" + encodeURIComponent(OMDB_KEY) + "&" + q);
+      if (!res.ok) return;
+      const d = await res.json();
+      if (d && d.Response === "True" && d.Poster && d.Poster !== "N/A") map[f.id] = d.Poster;
+    } catch (err) {}
+  }));
+  return map;
+}
+
+async function fetchWikiPosters(films){
+  const map = {};
+  try {
+    const titles = films.map(f => f.w).join("|");
+    const url = WIKI_API + "?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=520&titles=" + encodeURIComponent(titles);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("wiki " + res.status);
+    const data = await res.json();
+    const q = (data && data.query) || {};
+    const t2f = {};
+    films.forEach(f => { t2f[f.w] = f.id; });
+    [].concat(q.normalized || [], q.redirects || []).forEach(r => {
+      if (t2f[r.from] != null) t2f[r.to] = t2f[r.from];
+    });
+    Object.values(q.pages || {}).forEach(p => {
+      const fid = t2f[p.title];
+      if (fid && p.thumbnail && p.thumbnail.source) map[fid] = p.thumbnail.source;
+    });
+  } catch (err) {}
+  return map;
+}
+
+async function loadPosters(){
+  try {
+    const cached = JSON.parse(localStorage.getItem(KEY_POSTERS) || "null");
+    if (cached && cached.map && Date.now() - cached.t < 30 * 24 * 3600 * 1000){
+      applyPosters(cached.map);
+      return;
+    }
+  } catch (err) {}
+  const map = OMDB_KEY ? await fetchOmdbPosters(FILMS) : {};
+  const missing = FILMS.filter(f => !map[f.id]);
+  if (missing.length) Object.assign(map, await fetchWikiPosters(missing));
+  if (Object.keys(map).length){
+    applyPosters(map);
+    try { localStorage.setItem(KEY_POSTERS, JSON.stringify({t: Date.now(), map})); } catch (err) {}
+  }
+  /* aucune affiche récupérable : les tuiles colorées restent */
+}
 
 render();
 load();
+loadPosters();
 </script>
 </body>
 </html>
