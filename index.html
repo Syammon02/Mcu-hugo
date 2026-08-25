@@ -287,7 +287,7 @@ const FILMS = [
 
 const KEY = "mcu-films-vus";
 const KEY_DEVICE = "mcu-device-id";
-const KEY_POSTERS = "mcu-affiches-v2";
+const KEY_POSTERS = "mcu-affiches-v3";
 let seen = new Set();
 let saveTimer = null;
 
@@ -505,7 +505,7 @@ async function fetchWikiPosters(films){
   const map = {};
   try {
     const titles = films.map(f => f.w).join("|");
-    const url = WIKI_API + "?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=520&titles=" + encodeURIComponent(titles);
+    const url = WIKI_API + "?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=520&pilimit=50&pilicense=any&titles=" + encodeURIComponent(titles);
     const res = await fetch(url);
     if (!res.ok) throw new Error("wiki " + res.status);
     const data = await res.json();
