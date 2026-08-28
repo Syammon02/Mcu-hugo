@@ -196,7 +196,7 @@
 <header class="bar">
   <div class="bar-in">
     <div class="logo">Le MCU dans l'<span>ordre</span></div>
-    <div class="counter"><b id="done">0</b> / 38 films vus</div>
+    <div class="counter"><b id="done">0</b> / 37 films vus</div>
     <button class="reset" id="reset" type="button">Repartir de zéro</button>
     <div class="strip" id="strip" aria-hidden="true"></div>
   </div>
@@ -204,7 +204,7 @@
 
 <section class="intro">
   <div class="kicker">Ordre de sortie, films uniquement</div>
-  <h1>38 films, une seule bonne route</h1>
+  <h1>37 films, une seule bonne route</h1>
   <p>C'est l'ordre dans lequel les films sont sortis au cinéma, et c'est celui à suivre pour une première découverte : les clins d'œil, les scènes post-génériques et les révélations arrivent au bon moment, sans rien griller à l'avance.</p>
   <p>Coche un film quand tu l'as vu. Ta progression reste enregistrée, tu peux fermer la page et revenir plus tard.</p>
   <div class="rule"></div>
@@ -241,7 +241,6 @@ const PHASES = [
 // imdb : identifiant IMDb pour la requête OMDb (absent = recherche OMDb par titre + année)
 const FILMS = [
   {id:"f01", p:1, t:"Iron Man", y:2008, w:"Iron Man (2008 film)", imdb:"tt0371746", h:"Un marchand d'armes se fabrique une armure. Tout part de là."},
-  {id:"f02", p:1, t:"L'Incroyable Hulk", y:2008, w:"The Incredible Hulk (film)", imdb:"tt0800080", h:"Bruce Banner en cavale. Le film le plus isolé de la saga."},
   {id:"f03", p:1, t:"Iron Man 2", y:2010, w:"Iron Man 2", imdb:"tt1228705", h:"Tony gère mal sa célébrité, le S.H.I.E.L.D. s'installe."},
   {id:"f04", p:1, t:"Thor", y:2011, w:"Thor (film)", imdb:"tt0800369", h:"Un dieu banni sur Terre apprend l'humilité."},
   {id:"f05", p:1, t:"Captain America : First Avenger", y:2011, w:"Captain America: The First Avenger", imdb:"tt0458339", h:"1943, la naissance du super-soldat."},
@@ -285,6 +284,7 @@ const FILMS = [
   {id:"f38", p:6, t:"Spider-Man : Brand New Day", y:2026, w:"Spider-Man: Brand New Day", h:"Peter Parker repart de zéro dans un monde qui l'a oublié."}
 ];
 
+const VALID_IDS = new Set(FILMS.map(f => f.id));
 const KEY = "mcu-films-vus";
 const KEY_DEVICE = "mcu-device-id";
 const KEY_POSTERS = "mcu-affiches-v3";
@@ -424,7 +424,7 @@ async function flushPending(){
 async function load(){
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) seen = new Set(JSON.parse(raw));
+    if (raw) seen = new Set(JSON.parse(raw).filter(id => VALID_IDS.has(id)));
   } catch (err) {}
   sync();
 
@@ -432,7 +432,7 @@ async function load(){
     const r = await sb(`${TABLE}?device_id=eq.${encodeURIComponent(deviceId)}&select=film_id`);
     if (!r.ok) throw new Error("select " + r.status);
     const rows = await r.json();
-    const remote = new Set(rows.map(x => x.film_id));
+    const remote = new Set(rows.map(x => x.film_id).filter(id => VALID_IDS.has(id)));
     const localOnly = [...seen].filter(id => !remote.has(id));
     remote.forEach(id => seen.add(id));
     sync();

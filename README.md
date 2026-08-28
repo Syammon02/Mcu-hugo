@@ -1,6 +1,6 @@
 # Le MCU dans l'ordre
 
-Checklist des 38 films du MCU dans l'ordre de sortie, avec suivi de progression synchronisé.
+Checklist des films du MCU dans l'ordre de sortie, avec suivi de progression synchronisé.
 
 Site 100 % statique : un seul fichier, `index.html`. Aucun build.
 
